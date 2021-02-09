@@ -22,5 +22,14 @@ WORKDIR $HOME
 
 
 # === Basic ubuntu packags ===
-COPY --chown=$USERNAME:$USERNAME ubuntu_base_package.sh $TMP_SCRIPTS/
-RUN $TMP_SCRIPTS/ubuntu_base_package.sh
+COPY --chown=$USERNAME:$USERNAME ubuntu_base_packages.sh $TMP_SCRIPTS/
+RUN $TMP_SCRIPTS/ubuntu_base_packages.sh
+
+# === Basic python packags ===
+COPY --chown=$USERNAME:$USERNAME python_packages.sh $TMP_SCRIPTS/
+RUN $TMP_SCRIPTS/python_packages.sh
+
+# === Neovim Install ===
+RUN mkdir -p $TMP_SCRIPTS/neovim && chown $USERNAME:$USERNAME $TMP_SCRIPTS/neovim
+COPY --chown=$USERNAME:$USERNAME neovim $TMP_SCRIPTS/neovim
+RUN $TMP_SCRIPTS/neovim/neovim_install.sh install
