@@ -1,9 +1,11 @@
 #!/bin/bash
 
 #set -v
-AUTOCOMPLE="jedi"  # jedi, coc
+AUTOCOMPLE="coc"  # jedi, coc
 #INIT_VIM_PATH=$HOME/.config/nvim/init.vim
 INIT_VIM_PATH=init.vim
+export N_PREFIX=$HOME/.n
+#INIT_VIM_PATH=init.vim
 
 function install_neovim
 {
@@ -24,23 +26,28 @@ function install_requirements
     # Install python3 support
     sudo apt-get install python3-pip -y
     pip3 install pynvim
+    pip3 install pylint --upgrade
 }
 
 function install_autocomplete
 {
     function install_coc
     {
+        PATH="$PATH:$N_PREFIX"
         pip3 install --user jedi --upgrade
 
         sudo apt-get install npm -y
-        sudo npm chach clean -f
-        sudo npm install -g n
         sudo npm install -g neovim
-        sudo n stable
+        git clone https://github.com/tj/n $N_PREFIX
+        n 11
 
-        # Install nodejs >= 10.12
-        curl -sL install-node.now.sh/lts | bash
-        nvim "+CocInstall coc-python"
+        if ! cat $INIT_VIM_PATH | grep -iq "davidhalter/jedi-vim"; then
+            sed -i '/^" AutoCompletePlugin.*/a Plug '\''neoclide/coc.nvim'\'', { '\''branch'\'': '\''release'\'' }' $INIT_VIM_PATH
+        fi
+
+        nvim +PlugClean! +PlugInstall +UpdateRemotePlugins +qall
+
+        nvim +CocInstall coc-json coc-tsserver coc-python +qall
     }
 
     function install_jedi
@@ -72,22 +79,26 @@ function install_autocomplete
     
 }
 
-function install_plug_plugin
+function install_plug_plugin_legacy
 {
     # Install Plugin that install Plugin :)
     curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
         https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-
     nvim +PlugClean! +PlugInstall +UpdateRemotePlugins +qall
 
-    #install_coc
+    install_autocomplete
+}
+function install_plug_plugin_new
+{
+    # I am replacing the plugin manager because I want it to be writen in lua
+    git clone https://github.com/savq/paq-nvim.git \
+        "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/pack/paqs/opt/paq-nvim
 }
 
 function install
 {
     install_neovim
     install_requirements
-    install_plug_plugin
-    
+    install_plug_plugin_legacy 
 }
 "$@"
